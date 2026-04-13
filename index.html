@@ -1,0 +1,898 @@
+<html lang="ar" dir="rtl"><head>
+  <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+// Only notify the parent frame after the server confirms the error passed
+// the filter and the overlay will be shown.
+hot.on("runtime-error-plugin:notify-parent", () => {
+  try {
+    window.parent.postMessage({ type: "runtime-error", id: null }, "*");
+  } catch (_) {}
+});
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+  <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+  <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ جوكر التخدير - نور صبري</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&amp;display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-cyan: #2dd4bf; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #060d1f;
+            color: white;
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(45,212,191,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(139,92,246,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.04) 0%, transparent 70%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(15, 25, 50, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(45,212,191,0.12);
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .btn-cyan {
+            background: linear-gradient(135deg, #0d9488, #2dd4bf, #34d399);
+            color: #0f172a;
+            font-weight: 800;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-cyan::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-cyan:hover:not(:disabled)::before { left: 100%; }
+        .btn-cyan:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(45,212,191,0.5), 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .btn-cyan:disabled { opacity: 0.5; cursor: not-allowed; }
+        .input-dark {
+            background: rgba(6, 13, 31, 0.8);
+            border: 1px solid rgba(45,212,191,0.2);
+            color: white;
+            border-radius: 0.75rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .input-dark:focus {
+            border-color: #2dd4bf;
+            box-shadow: 0 0 0 3px rgba(45,212,191,0.15), 0 0 20px rgba(45,212,191,0.1);
+        }
+        .diff-btn {
+            background: rgba(6,13,31,0.8);
+            border: 1px solid rgba(45,212,191,0.15);
+            color: #64748b;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-family: 'Cairo', sans-serif;
+        }
+        .diff-btn:hover { border-color: rgba(45,212,191,0.4); color: #94a3b8; }
+        .diff-btn.active {
+            background: linear-gradient(135deg, rgba(45,212,191,0.2), rgba(16,185,129,0.2));
+            color: #2dd4bf;
+            border-color: #2dd4bf;
+            box-shadow: 0 0 16px rgba(45,212,191,0.25), inset 0 1px 0 rgba(45,212,191,0.2);
+        }
+        .loader {
+            width: 22px; height: 22px;
+            border: 3px solid rgba(15,23,42,0.3);
+            border-top-color: #0f172a;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .drop-zone {
+            border: 2px dashed rgba(45,212,191,0.2);
+            border-radius: 1.25rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .drop-zone:hover {
+            border-color: rgba(45,212,191,0.5);
+            background: rgba(45,212,191,0.04);
+            box-shadow: inset 0 0 30px rgba(45,212,191,0.04);
+        }
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(45,212,191,0.12);
+            border: 1px solid rgba(45,212,191,0.25);
+            color: #2dd4bf;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-bar {
+            background: linear-gradient(135deg, rgba(45,212,191,0.08), rgba(16,185,129,0.08));
+            border: 1px solid rgba(45,212,191,0.2);
+            border-radius: 1rem;
+            padding: 14px 18px;
+            text-align: center;
+            color: #2dd4bf;
+            font-size: 0.9rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.75} }
+        .error-bar {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 1rem;
+            padding: 14px 18px;
+            text-align: center;
+            color: #f87171;
+            font-size: 0.9rem;
+        }
+        .glow-text {
+            background: linear-gradient(135deg, #2dd4bf, #34d399, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .credit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(45,212,191,0.1), rgba(139,92,246,0.1));
+            border: 1px solid rgba(45,212,191,0.2);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .stat-card {
+            background: rgba(45,212,191,0.06);
+            border: 1px solid rgba(45,212,191,0.12);
+            border-radius: 1rem;
+            padding: 16px;
+            text-align: center;
+        }
+    </style>
+  <script type="module">"use strict";(()=>{var O="0.5.1";var v={HIGHLIGHT_COLOR:"#0079F2",HIGHLIGHT_BG:"#0079F210",ALLOWED_PARENT_DOMAINS:[".replit.dev",".replit.com",".replit-staging.com",".repl.co"],THEME_PREVIEW_STYLE_ID:"replit-theme-preview",MAX_SIBLING_HIGHLIGHTERS:1e3,MAX_DESCENDANTS_FOR_SCREENSHOT:1500},ie=`
+  [contenteditable] {
+    outline: none !important;
+  }
+
+  [contenteditable]:focus {
+    outline: none !important;
+  }
+`,ne=`
+  .beacon-highlighter {
+    content: '';
+    position: absolute;
+    z-index: ${Number.MAX_SAFE_INTEGER-3};
+    box-sizing: border-box;
+    pointer-events: none;
+    outline: 2px dashed ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    background: ${v.HIGHLIGHT_BG} !important;
+    opacity: 0;
+  }
+  
+  .beacon-hover-highlighter {
+    position: fixed;
+    z-index: ${Number.MAX_SAFE_INTEGER};
+  }
+  
+  .beacon-selected-highlighter {
+    position: fixed;
+    pointer-events: none;
+    outline: 2px solid ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 3px !important;
+    background: none !important;
+  }
+  
+  .beacon-label {
+    position: absolute;
+    background-color: ${v.HIGHLIGHT_COLOR};
+    color: #FFFFFF;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: monospace;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transform: translateY(-100%);
+    margin-top: -4px;
+    left: 0;
+    z-index: ${Number.MAX_SAFE_INTEGER-2};
+    pointer-events: none;
+    opacity: 0;
+  }
+  
+  .beacon-hover-label {
+    position: fixed;
+    z-index: ${Number.MAX_SAFE_INTEGER};
+  }
+  
+  .beacon-selected-label {
+    position: fixed;
+    pointer-events: none;
+  }
+  
+  .beacon-sibling-highlighter {
+    position: fixed;
+    pointer-events: none;
+    outline: 2px dashed ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    background: ${v.HIGHLIGHT_BG} !important;
+  }
+`;function Fe(e,i){return e[13]=1,e[14]=i>>8,e[15]=i&255,e[16]=i>>8,e[17]=i&255,e}var he=112,de=72,ue=89,ge=115,G;function Ue(){let e=new Int32Array(256);for(let i=0;i<256;i++){let t=i;for(let n=0;n<8;n++)t=t&1?3988292384^t>>>1:t>>>1;e[i]=t}return e}function $e(e){let i=-1;G||(G=Ue());for(let t=0;t<e.length;t++)i=G[(i^e[t])&255]^i>>>8;return i^-1}function We(e){let i=e.length-1;for(let t=i;t>=4;t--)if(e[t-4]===9&&e[t-3]===he&&e[t-2]===de&&e[t-1]===ue&&e[t]===ge)return t-3;return 0}function Ge(e,i,t=!1){let n=new Uint8Array(13);i*=39.3701,n[0]=he,n[1]=de,n[2]=ue,n[3]=ge,n[4]=i>>>24,n[5]=i>>>16,n[6]=i>>>8,n[7]=i&255,n[8]=n[4],n[9]=n[5],n[10]=n[6],n[11]=n[7],n[12]=1;let r=$e(n),o=new Uint8Array(4);if(o[0]=r>>>24,o[1]=r>>>16,o[2]=r>>>8,o[3]=r&255,t){let l=We(e);return e.set(n,l),e.set(o,l+13),e}else{let l=new Uint8Array(4);l[0]=0,l[1]=0,l[2]=0,l[3]=9;let s=new Uint8Array(54);return s.set(e,0),s.set(l,33),s.set(n,37),s.set(o,50),s}}var me="[modern-screenshot]",C=typeof window<"u",Ve=C&&"Worker"in window,je=C&&"atob"in window,ii=C&&"btoa"in window,j=C?window.navigator?.userAgent:"",fe=j.includes("Chrome"),B=j.includes("AppleWebKit")&&!fe,z=j.includes("Firefox"),ze=e=>e&&"__CONTEXT__"in e,qe=e=>e.constructor.name==="CSSFontFaceRule",Xe=e=>e.constructor.name==="CSSImportRule",S=e=>e.nodeType===1,_=e=>typeof e.className=="object",pe=e=>e.tagName==="image",Ye=e=>e.tagName==="use",R=e=>S(e)&&typeof e.style<"u"&&!_(e),Ke=e=>e.nodeType===8,Je=e=>e.nodeType===3,L=e=>e.tagName==="IMG",k=e=>e.tagName==="VIDEO",Qe=e=>e.tagName==="CANVAS",Ze=e=>e.tagName==="TEXTAREA",et=e=>e.tagName==="INPUT",tt=e=>e.tagName==="STYLE",it=e=>e.tagName==="SCRIPT",nt=e=>e.tagName==="SELECT",rt=e=>e.tagName==="SLOT",ot=e=>e.tagName==="IFRAME",st=(...e)=>console.warn(me,...e);function lt(e){let i=e?.createElement?.("canvas");return i&&(i.height=i.width=1),!!i&&"toDataURL"in i&&!!i.toDataURL("image/webp").includes("image/webp")}var V=e=>e.startsWith("data:");function be(e,i){if(e.match(/^[a-z]+:\/\//i))return e;if(C&&e.match(/^\/\//))return window.location.protocol+e;if(e.match(/^[a-z]+:/i)||!C)return e;let t=F().implementation.createHTMLDocument(),n=t.createElement("base"),r=t.createElement("a");return t.head.appendChild(n),t.body.appendChild(r),i&&(n.href=i),r.href=e,r.href}function F(e){return(e&&S(e)?e?.ownerDocument:e)??window.document}var U="http://www.w3.org/2000/svg";function at(e,i,t){let n=F(t).createElementNS(U,"svg");return n.setAttributeNS(null,"width",e.toString()),n.setAttributeNS(null,"height",i.toString()),n.setAttributeNS(null,"viewBox",`0 0 ${e} ${i}`),n}function ct(e,i){let t=new XMLSerializer().serializeToString(e);return i&&(t=t.replace(/[\u0000-\u0008\v\f\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu,"")),`data:image/svg+xml;charset=utf-8,${encodeURIComponent(t)}`}async function ht(e,i="image/png",t=1){try{return await new Promise((n,r)=>{e.toBlob(o=>{o?n(o):r(new Error("Blob is null"))},i,t)})}catch(n){if(je)return dt(e.toDataURL(i,t));throw n}}function dt(e){let[i,t]=e.split(","),n=i.match(/data:(.+);/)?.[1]??void 0,r=window.atob(t),o=r.length,l=new Uint8Array(o);for(let s=0;s<o;s+=1)l[s]=r.charCodeAt(s);return new Blob([l],{type:n})}function Ee(e,i){return new Promise((t,n)=>{let r=new FileReader;r.onload=()=>t(r.result),r.onerror=()=>n(r.error),r.onabort=()=>n(new Error(`Failed read blob to ${i}`)),i==="dataUrl"?r.readAsDataURL(e):i==="arrayBuffer"&&r.readAsArrayBuffer(e)})}var ut=e=>Ee(e,"dataUrl"),gt=e=>Ee(e,"arrayBuffer");function H(e,i){let t=F(i).createElement("img");return t.decoding="sync",t.loading="eager",t.src=e,t}function x(e,i){return new Promise(t=>{let{timeout:n,ownerDocument:r,onError:o,onWarn:l}=i??{},s=typeof e=="string"?H(e,F(r)):e,c=null,h=null;function a(){t(s),c&&clearTimeout(c),h?.()}if(n&&(c=setTimeout(a,n)),k(s)){let d=s.currentSrc||s.src;if(!d)return s.poster?x(s.poster,i).then(t):a();if(s.readyState>=2)return a();let u=a,m=g=>{l?.("Failed video load",d,g),o?.(g),a()};h=()=>{s.removeEventListener("loadeddata",u),s.removeEventListener("error",m)},s.addEventListener("loadeddata",u,{once:!0}),s.addEventListener("error",m,{once:!0})}else{let d=pe(s)?s.href.baseVal:s.currentSrc||s.src;if(!d)return a();let u=async()=>{if(L(s)&&"decode"in s)try{await s.decode()}catch(g){l?.("Failed to decode image, trying to render anyway",s.dataset.originalSrc||d,g)}a()},m=g=>{l?.("Failed image load",s.dataset.originalSrc||d,g),a()};if(L(s)&&s.complete)return u();h=()=>{s.removeEventListener("load",u),s.removeEventListener("error",m)},s.addEventListener("load",u,{once:!0}),s.addEventListener("error",m,{once:!0})}})}async function mt(e,i){R(e)&&(L(e)||k(e)?await x(e,i):await Promise.all(["img","video"].flatMap(t=>Array.from(e.querySelectorAll(t)).map(n=>x(n,i)))))}var ve=function(){let i=0,t=()=>`0000${(Math.random()*36**4<<0).toString(36)}`.slice(-4);return()=>(i+=1,`u${t()}${i}`)}();function we(e){return e?.split(",").map(i=>i.trim().replace(/"|'/g,"").toLowerCase()).filter(Boolean)}var re=0;function ft(e){let i=`${me}[#${re}]`;return re++,{time:t=>e&&console.time(`${i} ${t}`),timeEnd:t=>e&&console.timeEnd(`${i} ${t}`),warn:(...t)=>e&&st(...t)}}function pt(e){return{cache:e?"no-cache":"force-cache"}}async function q(e,i){return ze(e)?e:bt(e,{...i,autoDestruct:!0})}async function bt(e,i){let{scale:t=1,workerUrl:n,workerNumber:r=1}=i||{},o=!!i?.debug,l=i?.features??!0,s=e.ownerDocument??(C?window.document:void 0),c=e.ownerDocument?.defaultView??(C?window:void 0),h=new Map,a={width:0,height:0,quality:1,type:"image/png",scale:t,backgroundColor:null,style:null,filter:null,maximumCanvasSize:0,timeout:3e4,progress:null,debug:o,fetch:{requestInit:pt(i?.fetch?.bypassingCache),placeholderImage:"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",bypassingCache:!1,...i?.fetch},fetchFn:null,font:{},drawImageInterval:100,workerUrl:null,workerNumber:r,onCloneNode:null,onEmbedNode:null,onCreateForeignObjectSvg:null,includeStyleProperties:null,autoDestruct:!1,...i,__CONTEXT__:!0,log:ft(o),node:e,ownerDocument:s,ownerWindow:c,dpi:t===1?null:96*t,svgStyleElement:ye(s),svgDefsElement:s?.createElementNS(U,"defs"),svgStyles:new Map,defaultComputedStyles:new Map,workers:[...Array.from({length:Ve&&n&&r?r:0})].map(()=>{try{let m=new Worker(n);return m.onmessage=async g=>{let{url:f,result:p}=g.data;p?h.get(f)?.resolve?.(p):h.get(f)?.reject?.(new Error(`Error receiving message from worker: ${f}`))},m.onmessageerror=g=>{let{url:f}=g.data;h.get(f)?.reject?.(new Error(`Error receiving message from worker: ${f}`))},m}catch(m){return a.log.warn("Failed to new Worker",m),null}}).filter(Boolean),fontFamilies:new Map,fontCssTexts:new Map,acceptOfImage:`${[lt(s)&&"image/webp","image/svg+xml","image/*","*/*"].filter(Boolean).join(",")};q=0.8`,requests:h,drawImageCount:0,tasks:[],features:l,isEnable:m=>m==="restoreScrollPosition"?typeof l=="boolean"?!1:l[m]??!1:typeof l=="boolean"?l:l[m]??!0};a.log.time("wait until load"),await mt(e,{timeout:a.timeout,onWarn:a.log.warn}),a.log.timeEnd("wait until load");let{width:d,height:u}=Et(e,a);return a.width=d,a.height=u,a}function ye(e){if(!e)return;let i=e.createElement("style"),t=i.ownerDocument.createTextNode(`
+.______background-clip--text {
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+`);return i.appendChild(t),i}function Et(e,i){let{width:t,height:n}=i;if(S(e)&&(!t||!n)){let r=e.getBoundingClientRect();t=t||r.width||Number(e.getAttribute("width"))||0,n=n||r.height||Number(e.getAttribute("height"))||0}return{width:t,height:n}}async function vt(e,i){let{log:t,timeout:n,drawImageCount:r,drawImageInterval:o}=i;t.time("image to canvas");let l=await x(e,{timeout:n,onWarn:i.log.warn}),{canvas:s,context2d:c}=wt(e.ownerDocument,i),h=()=>{try{c?.drawImage(l,0,0,s.width,s.height)}catch(a){i.log.warn("Failed to drawImage",a)}};if(h(),i.isEnable("fixSvgXmlDecode"))for(let a=0;a<r;a++)await new Promise(d=>{setTimeout(()=>{h(),d()},a+o)});return i.drawImageCount=0,t.timeEnd("image to canvas"),s}function wt(e,i){let{width:t,height:n,scale:r,backgroundColor:o,maximumCanvasSize:l}=i,s=e.createElement("canvas");s.width=Math.floor(t*r),s.height=Math.floor(n*r),s.style.width=`${t}px`,s.style.height=`${n}px`,l&&(s.width>l||s.height>l)&&(s.width>l&&s.height>l?s.width>s.height?(s.height*=l/s.width,s.width=l):(s.width*=l/s.height,s.height=l):s.width>l?(s.height*=l/s.width,s.width=l):(s.width*=l/s.height,s.height=l));let c=s.getContext("2d");return c&&o&&(c.fillStyle=o,c.fillRect(0,0,s.width,s.height)),{canvas:s,context2d:c}}function Se(e,i){if(e.ownerDocument)try{let o=e.toDataURL();if(o!=="data:,")return H(o,e.ownerDocument)}catch(o){i.log.warn("Failed to clone canvas",o)}let t=e.cloneNode(!1),n=e.getContext("2d"),r=t.getContext("2d");try{return n&&r&&r.putImageData(n.getImageData(0,0,e.width,e.height),0,0),t}catch(o){i.log.warn("Failed to clone canvas",o)}return t}function yt(e,i){try{if(e?.contentDocument?.body)return X(e.contentDocument.body,i)}catch(t){i.log.warn("Failed to clone iframe",t)}return e.cloneNode(!1)}function St(e){let i=e.cloneNode(!1);return e.currentSrc&&e.currentSrc!==e.src&&(i.src=e.currentSrc,i.srcset=""),i.loading==="lazy"&&(i.loading="eager"),i}async function Tt(e,i){if(e.ownerDocument&&!e.currentSrc&&e.poster)return H(e.poster,e.ownerDocument);let t=e.cloneNode(!1);t.crossOrigin="anonymous",e.currentSrc&&e.currentSrc!==e.src&&(t.src=e.currentSrc);let n=t.ownerDocument;if(n){let r=!0;if(await x(t,{onError:()=>r=!1,onWarn:i.log.warn}),!r)return e.poster?H(e.poster,e.ownerDocument):t;t.currentTime=e.currentTime,await new Promise(l=>{t.addEventListener("seeked",l,{once:!0})});let o=n.createElement("canvas");o.width=e.offsetWidth,o.height=e.offsetHeight;try{let l=o.getContext("2d");l&&l.drawImage(t,0,0,o.width,o.height)}catch(l){return i.log.warn("Failed to clone video",l),e.poster?H(e.poster,e.ownerDocument):t}return Se(o,i)}return t}function At(e,i){return Qe(e)?Se(e,i):ot(e)?yt(e,i):L(e)?St(e):k(e)?Tt(e,i):e.cloneNode(!1)}function Ct(e){let i=e.sandbox;if(!i){let{ownerDocument:t}=e;try{t&&(i=t.createElement("iframe"),i.id=`__SANDBOX__-${ve()}`,i.width="0",i.height="0",i.style.visibility="hidden",i.style.position="fixed",t.body.appendChild(i),i.contentWindow?.document.write('<!DOCTYPE html><meta charset="UTF-8"><title></title><body>'),e.sandbox=i)}catch(n){e.log.warn("Failed to getSandBox",n)}}return i}var Ht=["width","height","-webkit-text-fill-color"],Lt=["stroke","fill"];function Te(e,i,t){let{defaultComputedStyles:n}=t,r=e.nodeName.toLowerCase(),o=_(e)&&r!=="svg",l=o?Lt.map(f=>[f,e.getAttribute(f)]).filter(([,f])=>f!==null):[],s=[o&&"svg",r,l.map((f,p)=>`${f}=${p}`).join(","),i].filter(Boolean).join(":");if(n.has(s))return n.get(s);let h=Ct(t)?.contentWindow;if(!h)return new Map;let a=h?.document,d,u;o?(d=a.createElementNS(U,"svg"),u=d.ownerDocument.createElementNS(d.namespaceURI,r),l.forEach(([f,p])=>{u.setAttributeNS(null,f,p)}),d.appendChild(u)):d=u=a.createElement(r),u.textContent=" ",a.body.appendChild(d);let m=h.getComputedStyle(u,i),g=new Map;for(let f=m.length,p=0;p<f;p++){let b=m.item(p);Ht.includes(b)||g.set(b,m.getPropertyValue(b))}return a.body.removeChild(d),n.set(s,g),g}function Ae(e,i,t){let n=new Map,r=[],o=new Map;if(t)for(let s of t)l(s);else for(let s=e.length,c=0;c<s;c++){let h=e.item(c);l(h)}for(let s=r.length,c=0;c<s;c++)o.get(r[c])?.forEach((h,a)=>n.set(a,h));function l(s){let c=e.getPropertyValue(s),h=e.getPropertyPriority(s),a=s.lastIndexOf("-"),d=a>-1?s.substring(0,a):void 0;if(d){let u=o.get(d);u||(u=new Map,o.set(d,u)),u.set(s,[c,h])}i.get(s)===c&&!h||(d?r.push(d):n.set(s,[c,h]))}return n}function Rt(e,i,t,n){let{ownerWindow:r,includeStyleProperties:o,currentParentNodeStyle:l}=n,s=i.style,c=r.getComputedStyle(e),h=Te(e,null,n);l?.forEach((d,u)=>{h.delete(u)});let a=Ae(c,h,o);a.delete("transition-property"),a.delete("all"),a.delete("d"),a.delete("content"),t&&(a.delete("margin-top"),a.delete("margin-right"),a.delete("margin-bottom"),a.delete("margin-left"),a.delete("margin-block-start"),a.delete("margin-block-end"),a.delete("margin-inline-start"),a.delete("margin-inline-end"),a.set("box-sizing",["border-box",""])),a.get("background-clip")?.[0]==="text"&&i.classList.add("______background-clip--text"),fe&&(a.has("font-kerning")||a.set("font-kerning",["normal",""]),(a.get("overflow-x")?.[0]==="hidden"||a.get("overflow-y")?.[0]==="hidden")&&a.get("text-overflow")?.[0]==="ellipsis"&&e.scrollWidth===e.clientWidth&&a.set("text-overflow",["clip",""]));for(let d=s.length,u=0;u<d;u++)s.removeProperty(s.item(u));return a.forEach(([d,u],m)=>{s.setProperty(m,d,u)}),a}function xt(e,i){(Ze(e)||et(e)||nt(e))&&i.setAttribute("value",e.value)}var Nt=[":before",":after"],_t=[":-webkit-scrollbar",":-webkit-scrollbar-button",":-webkit-scrollbar-thumb",":-webkit-scrollbar-track",":-webkit-scrollbar-track-piece",":-webkit-scrollbar-corner",":-webkit-resizer"];function It(e,i,t,n,r){let{ownerWindow:o,svgStyleElement:l,svgStyles:s,currentNodeStyle:c}=n;if(!l||!o)return;function h(a){let d=o.getComputedStyle(e,a),u=d.getPropertyValue("content");if(!u||u==="none")return;r?.(u),u=u.replace(/(')|(")|(counter\(.+\))/g,"");let m=[ve()],g=Te(e,a,n);c?.forEach((E,y)=>{g.delete(y)});let f=Ae(d,g,n.includeStyleProperties);f.delete("content"),f.delete("-webkit-locale"),f.get("background-clip")?.[0]==="text"&&i.classList.add("______background-clip--text");let p=[`content: '${u}';`];if(f.forEach(([E,y],A)=>{p.push(`${A}: ${E}${y?" !important":""};`)}),p.length===1)return;try{i.className=[i.className,...m].join(" ")}catch(E){n.log.warn("Failed to copyPseudoClass",E);return}let b=p.join(`
+  `),w=s.get(b);w||(w=[],s.set(b,w)),w.push(`.${m[0]}:${a}`)}Nt.forEach(h),t&&_t.forEach(h)}var oe=new Set(["symbol"]);async function se(e,i,t,n,r){if(S(t)&&(tt(t)||it(t))||n.filter&&!n.filter(t))return;oe.has(i.nodeName)||oe.has(t.nodeName)?n.currentParentNodeStyle=void 0:n.currentParentNodeStyle=n.currentNodeStyle;let o=await X(t,n,!1,r);n.isEnable("restoreScrollPosition")&&Mt(e,o),i.appendChild(o)}async function le(e,i,t,n){let r=(S(e)?e.shadowRoot?.firstChild:void 0)??e.firstChild;for(let o=r;o;o=o.nextSibling)if(!Ke(o))if(S(o)&&rt(o)&&typeof o.assignedNodes=="function"){let l=o.assignedNodes();for(let s=0;s<l.length;s++)await se(e,i,l[s],t,n)}else await se(e,i,o,t,n)}function Mt(e,i){if(!R(e)||!R(i))return;let{scrollTop:t,scrollLeft:n}=e;if(!t&&!n)return;let{transform:r}=i.style,o=new DOMMatrix(r),{a:l,b:s,c,d:h}=o;o.a=1,o.b=0,o.c=0,o.d=1,o.translateSelf(-n,-t),o.a=l,o.b=s,o.c=c,o.d=h,i.style.transform=o.toString()}function Dt(e,i){let{backgroundColor:t,width:n,height:r,style:o}=i,l=e.style;if(t&&l.setProperty("background-color",t,"important"),n&&l.setProperty("width",`${n}px`,"important"),r&&l.setProperty("height",`${r}px`,"important"),o)for(let s in o)l[s]=o[s]}var Pt=/^[\w-:]+$/;async function X(e,i,t=!1,n){let{ownerDocument:r,ownerWindow:o,fontFamilies:l}=i;if(r&&Je(e))return n&&/\S/.test(e.data)&&n(e.data),r.createTextNode(e.data);if(r&&o&&S(e)&&(R(e)||_(e))){let c=await At(e,i);if(i.isEnable("removeAbnormalAttributes")){let g=c.getAttributeNames();for(let f=g.length,p=0;p<f;p++){let b=g[p];Pt.test(b)||c.removeAttribute(b)}}let h=i.currentNodeStyle=Rt(e,c,t,i);t&&Dt(c,i);let a=!1;if(i.isEnable("copyScrollbar")){let g=[h.get("overflow-x")?.[0],h.get("overflow-y")?.[0]];a=g.includes("scroll")||(g.includes("auto")||g.includes("overlay"))&&(e.scrollHeight>e.clientHeight||e.scrollWidth>e.clientWidth)}let d=h.get("text-transform")?.[0],u=we(h.get("font-family")?.[0]),m=u?g=>{d==="uppercase"?g=g.toUpperCase():d==="lowercase"?g=g.toLowerCase():d==="capitalize"&&(g=g[0].toUpperCase()+g.substring(1)),u.forEach(f=>{let p=l.get(f);p||l.set(f,p=new Set),g.split("").forEach(b=>p.add(b))})}:void 0;return It(e,c,a,i,m),xt(e,c),k(e)||await le(e,c,i,m),c}let s=e.cloneNode(!1);return await le(e,s,i),s}function Ot(e){if(e.ownerDocument=void 0,e.ownerWindow=void 0,e.svgStyleElement=void 0,e.svgDefsElement=void 0,e.svgStyles.clear(),e.defaultComputedStyles.clear(),e.sandbox){try{e.sandbox.remove()}catch(i){e.log.warn("Failed to destroyContext",i)}e.sandbox=void 0}e.workers=[],e.fontFamilies.clear(),e.fontCssTexts.clear(),e.requests.clear(),e.tasks=[]}function Bt(e){let{url:i,timeout:t,responseType:n,...r}=e,o=new AbortController,l=t?setTimeout(()=>o.abort(),t):void 0;return fetch(i,{signal:o.signal,...r}).then(s=>{if(!s.ok)throw new Error("Failed fetch, not 2xx response",{cause:s});switch(n){case"arrayBuffer":return s.arrayBuffer();case"dataUrl":return s.blob().then(ut);case"text":default:return s.text()}}).finally(()=>clearTimeout(l))}function N(e,i){let{url:t,requestType:n="text",responseType:r="text",imageDom:o}=i,l=t,{timeout:s,acceptOfImage:c,requests:h,fetchFn:a,fetch:{requestInit:d,bypassingCache:u,placeholderImage:m},font:g,workers:f,fontFamilies:p}=e;n==="image"&&(B||z)&&e.drawImageCount++;let b=h.get(t);if(!b){u&&u instanceof RegExp&&u.test(l)&&(l+=(/\?/.test(l)?"&":"?")+new Date().getTime());let w=n.startsWith("font")&&g&&g.minify,E=new Set;w&&n.split(";")[1].split(",").forEach(P=>{p.has(P)&&p.get(P).forEach(te=>E.add(te))});let y=w&&E.size,A={url:l,timeout:s,responseType:y?"arrayBuffer":r,headers:n==="image"?{accept:c}:void 0,...d};b={type:n,resolve:void 0,reject:void 0,response:null},b.response=(async()=>{if(a&&n==="image"){let T=await a(t);if(T)return T}return!B&&t.startsWith("http")&&f.length?new Promise((T,P)=>{f[h.size&f.length-1].postMessage({rawUrl:t,...A}),b.resolve=T,b.reject=P}):Bt(A)})().catch(T=>{if(h.delete(t),n==="image"&&m)return e.log.warn("Failed to fetch image base64, trying to use placeholder image",l),typeof m=="string"?m:m(o);throw T}),h.set(t,b)}return b.response}async function Ce(e,i,t,n){if(!He(e))return e;for(let[r,o]of kt(e,i))try{let l=await N(t,{url:o,requestType:n?"image":"text",responseType:"dataUrl"});e=e.replace(Ft(r),`$1${l}$3`)}catch(l){t.log.warn("Failed to fetch css data url",r,l)}return e}function He(e){return/url\((['"]?)([^'"]+?)\1\)/.test(e)}var Le=/url\((['"]?)([^'"]+?)\1\)/g;function kt(e,i){let t=[];return e.replace(Le,(n,r,o)=>(t.push([o,be(o,i)]),n)),t.filter(([n])=>!V(n))}function Ft(e){let i=e.replace(/([.*+?^${}()|\[\]\/\\])/g,"\\$1");return new RegExp(`(url\\(['"]?)(${i})(['"]?\\))`,"g")}var Ut=["background-image","border-image-source","-webkit-border-image","-webkit-mask-image","list-style-image"];function $t(e,i){return Ut.map(t=>{let n=e.getPropertyValue(t);return!n||n==="none"?null:((B||z)&&i.drawImageCount++,Ce(n,null,i,!0).then(r=>{!r||n===r||e.setProperty(t,r,e.getPropertyPriority(t))}))}).filter(Boolean)}function Wt(e,i){if(L(e)){let t=e.currentSrc||e.src;if(!V(t))return[N(i,{url:t,imageDom:e,requestType:"image",responseType:"dataUrl"}).then(n=>{n&&(e.srcset="",e.dataset.originalSrc=t,e.src=n||"")})];(B||z)&&i.drawImageCount++}else if(_(e)&&!V(e.href.baseVal)){let t=e.href.baseVal;return[N(i,{url:t,imageDom:e,requestType:"image",responseType:"dataUrl"}).then(n=>{n&&(e.dataset.originalSrc=t,e.href.baseVal=n||"")})]}return[]}function Gt(e,i){let{ownerDocument:t,svgDefsElement:n}=i,r=e.getAttribute("href")??e.getAttribute("xlink:href");if(!r)return[];let[o,l]=r.split("#");if(l){let s=`#${l}`,c=t?.querySelector(`svg ${s}`);if(o&&e.setAttribute("href",s),n?.querySelector(s))return[];if(c)return n?.appendChild(c.cloneNode(!0)),[];if(o)return[N(i,{url:o,responseType:"text"}).then(h=>{n?.insertAdjacentHTML("beforeend",h)})]}return[]}function Re(e,i){let{tasks:t}=i;S(e)&&((L(e)||pe(e))&&t.push(...Wt(e,i)),Ye(e)&&t.push(...Gt(e,i))),R(e)&&t.push(...$t(e.style,i)),e.childNodes.forEach(n=>{Re(n,i)})}async function Vt(e,i){let{ownerDocument:t,svgStyleElement:n,fontFamilies:r,fontCssTexts:o,tasks:l,font:s}=i;if(!(!t||!n||!r.size))if(s&&s.cssText){let c=ce(s.cssText,i);n.appendChild(t.createTextNode(`${c}
+`))}else{let c=Array.from(t.styleSheets).filter(a=>{try{return"cssRules"in a&&!!a.cssRules.length}catch(d){return i.log.warn(`Error while reading CSS rules from ${a.href}`,d),!1}});await Promise.all(c.flatMap(a=>Array.from(a.cssRules).map(async(d,u)=>{if(Xe(d)){let m=u+1,g=d.href,f="";try{f=await N(i,{url:g,requestType:"text",responseType:"text"})}catch(b){i.log.warn(`Error fetch remote css import from ${g}`,b)}let p=f.replace(Le,(b,w,E)=>b.replace(E,be(E,g)));for(let b of zt(p))try{a.insertRule(b,b.startsWith("@import")?m+=1:a.cssRules.length)}catch(w){i.log.warn("Error inserting rule from remote css import",{rule:b,error:w})}}}))),c.flatMap(a=>Array.from(a.cssRules)).filter(a=>qe(a)&&He(a.style.getPropertyValue("src"))&&we(a.style.getPropertyValue("font-family"))?.some(d=>r.has(d))).forEach(a=>{let d=a,u=o.get(d.cssText);u?n.appendChild(t.createTextNode(`${u}
+`)):l.push(Ce(d.cssText,d.parentStyleSheet?d.parentStyleSheet.href:null,i).then(m=>{m=ce(m,i),o.set(d.cssText,m),n.appendChild(t.createTextNode(`${m}
+`))}))})}}var jt=/(\/\*[\s\S]*?\*\/)/g,ae=/((@.*?keyframes [\s\S]*?){([\s\S]*?}\s*?)})/gi;function zt(e){if(e==null)return[];let i=[],t=e.replace(jt,"");for(;;){let o=ae.exec(t);if(!o)break;i.push(o[0])}t=t.replace(ae,"");let n=/@import[\s\S]*?url\([^)]*\)[\s\S]*?;/gi,r=new RegExp("((\\s*?(?:\\/\\*[\\s\\S]*?\\*\\/)?\\s*?@media[\\s\\S]*?){([\\s\\S]*?)}\\s*?})|(([\\s\\S]*?){([\\s\\S]*?)})","gi");for(;;){let o=n.exec(t);if(o)r.lastIndex=n.lastIndex;else if(o=r.exec(t),o)n.lastIndex=r.lastIndex;else break;i.push(o[0])}return i}var qt=/url\([^)]+\)\s*format\((["']?)([^"']+)\1\)/g,Xt=/src:\s*(?:url\([^)]+\)\s*format\([^)]+\)[,;]\s*)+/g;function ce(e,i){let{font:t}=i,n=t?t?.preferredFormat:void 0;return n?e.replace(Xt,r=>{for(;;){let[o,,l]=qt.exec(r)||[];if(!l)return"";if(l===n)return`src: ${o};`}}):e}async function Yt(e,i){let t=await q(e,i);if(S(t.node)&&_(t.node))return t.node;let{ownerDocument:n,log:r,tasks:o,svgStyleElement:l,svgDefsElement:s,svgStyles:c,font:h,progress:a,autoDestruct:d,onCloneNode:u,onEmbedNode:m,onCreateForeignObjectSvg:g}=t;r.time("clone node");let f=await X(t.node,t,!0);if(l&&n){let y="";c.forEach((A,T)=>{y+=`${A.join(`,
+`)} {
+  ${T}
+}
+`}),l.appendChild(n.createTextNode(y))}r.timeEnd("clone node"),await u?.(f),h!==!1&&S(f)&&(r.time("embed web font"),await Vt(f,t),r.timeEnd("embed web font")),r.time("embed node"),Re(f,t);let p=o.length,b=0,w=async()=>{for(;;){let y=o.pop();if(!y)break;try{await y}catch(A){t.log.warn("Failed to run task",A)}a?.(++b,p)}};a?.(b,p),await Promise.all([...Array.from({length:4})].map(w)),r.timeEnd("embed node"),await m?.(f);let E=Kt(f,t);return s&&E.insertBefore(s,E.children[0]),l&&E.insertBefore(l,E.children[0]),d&&Ot(t),await g?.(E),E}function Kt(e,i){let{width:t,height:n}=i,r=at(t,n,e.ownerDocument),o=r.ownerDocument.createElementNS(r.namespaceURI,"foreignObject");return o.setAttributeNS(null,"x","0%"),o.setAttributeNS(null,"y","0%"),o.setAttributeNS(null,"width","100%"),o.setAttributeNS(null,"height","100%"),o.append(e),r.appendChild(o),r}async function Jt(e,i){let t=await q(e,i),n=await Yt(t),r=ct(n,t.isEnable("removeControlCharacter"));t.autoDestruct||(t.svgStyleElement=ye(t.ownerDocument),t.svgDefsElement=t.ownerDocument?.createElementNS(U,"defs"),t.svgStyles.clear());let o=H(r,n.ownerDocument);return await vt(o,t)}async function Y(e,i){let t=await q(e,i),{log:n,type:r,quality:o,dpi:l}=t,s=await Jt(t);n.time("canvas to blob");let c=await ht(s,r,o);if(["image/png","image/jpeg"].includes(r)&&l){let h=await gt(c.slice(0,33)),a=new Uint8Array(h);return r==="image/png"?a=Ge(a,l):r==="image/jpeg"&&(a=Fe(a,l)),n.timeEnd("canvas to blob"),new Blob([a,c.slice(33)],{type:r})}return n.timeEnd("canvas to blob"),c}var I={METADATA:"data-replit-metadata",COMPONENT_NAME:"data-component-name"};function xe(e){if(e.startsWith("http://localhost:"))return!0;try{let i=new URL(e);return v.ALLOWED_PARENT_DOMAINS.some(t=>i.hostname===t.slice(1)||i.hostname.endsWith(t))}catch{return!1}}function K(e){if(!e)return null;let i=document.elementFromPoint(e.clientX,e.clientY);return i instanceof HTMLElement?i:null}function Qt(e,i=300){if(!e)return"";let t=String(e);return t.length<=i?t:t.slice(0,i)+"..."}function W(e){let i=e.getAttribute(I.COMPONENT_NAME)??e.tagName.toLowerCase();return Qt(i,50)}function J(e){return e.className.toString?e.className.toString():String(e.className)}function Ne(e,i=80){let t="";for(let n=0;n<e.childNodes.length;n++){let r=e.childNodes[n];if(r.nodeType===Node.TEXT_NODE&&(t+=r.textContent??"",t.length>i))return t.slice(0,i)+"..."}return t.trim()}var Zt=new Set(["script","style","noscript","link","meta","br","svg"]);function _e(e){let i={children:[],parent:null};return Object.defineProperty(i,"parent",{value:e,writable:!0,enumerable:!1,configurable:!0}),i}function Ie(e,i,t,n){let r=_e(i),o={tagName:e.tagName.toLowerCase(),textContent:Ne(e),id:e.id||void 0,className:J(e)||void 0,nodeId:t.get(e),relatedElements:r};n.set(e,o);for(let l=0;l<e.children.length;l++)Ie(e.children[l],o,t,n)}var $=class{ids=new WeakMap;nextId=0;get(i){let t=this.ids.get(i);if(t!==void 0)return t;let n=this.nextId++;return this.ids.set(i,n),n}};function Q(e,i,t,n,r){let o=t.get(e),l=_e(i),s=l.children,c={tagName:e.tagName.toLowerCase(),textContent:Ne(e),id:e.id||void 0,className:J(e)||void 0,nodeId:o,relatedElements:l};n.set(e,c);for(let h=0;h<e.children.length;h++){let a=e.children[h],d=a.tagName.toLowerCase();if(a!==r){if(d==="svg"){Ie(a,c,t,n);continue}Zt.has(d)||s.push(Q(a,c,t,n,r))}}return c}function Z(e,i){let t=window.getComputedStyle(e),n=f=>f.toLowerCase()==="currentcolor"?t.color:f,r=n(t.borderTopColor),o=n(t.borderRightColor),l=n(t.borderBottomColor),s=n(t.borderLeftColor),c=e.nextElementSibling,h=e.parentElement?.parentElement??null,a={backgroundColor:t.backgroundColor,borderTopColor:r,borderRightColor:o,borderBottomColor:l,borderLeftColor:s,borderTopLeftRadius:t.borderTopLeftRadius,borderTopRightRadius:t.borderTopRightRadius,borderBottomRightRadius:t.borderBottomRightRadius,borderBottomLeftRadius:t.borderBottomLeftRadius,borderTopWidth:t.borderTopWidth,borderRightWidth:t.borderRightWidth,borderBottomWidth:t.borderBottomWidth,borderLeftWidth:t.borderLeftWidth,color:t.color,display:t.display,position:t.position,width:t.width,height:t.height,fontSize:t.fontSize,fontFamily:t.fontFamily,fontWeight:t.fontWeight,margin:t.margin,padding:t.padding,opacity:t.opacity,textAlign:t.textAlign},d=i.get(e),u=e.parentElement?i.get(e.parentElement)??null:null,m={children:d?.relatedElements.children??[],parent:d?.relatedElements.parent??u,nextSibling:c?i.get(c)??void 0:void 0,grandParent:h?i.get(h)??void 0:void 0};return{tagName:e.tagName.toLowerCase(),nodeId:d?.nodeId,elementPath:e.getAttribute(I.METADATA)??"",elementName:W(e),textContent:e.textContent??"",originalTextContent:e.getAttribute("data-original-text")?decodeURIComponent(e.getAttribute("data-original-text")??""):void 0,srcAttribute:e.getAttribute("src")??"",hasChildElements:e.childElementCount>0,id:e.id,className:J(e),computedStyles:a,textAlign:t.textAlign,relatedElements:m}}async function Me(e){try{let t=window.getComputedStyle(e).backgroundColor;return De(t)&&(t=window.getComputedStyle(document.documentElement).backgroundColor),await Y(e,{type:"image/png",backgroundColor:t})}catch(i){console.error("[replit-cartographer] Failed to take screenshot:",i);return}}function De(e){return e==="transparent"||e==="rgba(0, 0, 0, 0)"||e.endsWith(", 0)")||e.endsWith(",0)")}async function Pe(){try{let e=document.documentElement,i=window.getComputedStyle(e).backgroundColor,t=De(i)?"#ffffff":i;return await Y(e,{type:"image/png",backgroundColor:t})}catch(e){console.error("[replit-cartographer] Failed to take page screenshot:",e);return}}function ee(e){let i=e.getBoundingClientRect(),t=window.innerHeight,n=window.innerWidth;return i.bottom>0&&i.top<t&&i.right>0&&i.left<n}function M(e,i=v.MAX_SIBLING_HIGHLIGHTERS,t=!1){let o=e.getAttribute(I.METADATA);if(!o)return[];let l=`[${I.METADATA}="${o}"]`,s=document,c=e.parentElement;c&&c.childElementCount>50&&(s=c);let h=s.querySelectorAll(l),a=Math.min(i,5e3),d=[],u=0;for(let m=0;m<h.length&&u<a;m++){let g=h[m];if(g instanceof HTMLElement&&g!==e){if(t&&!ee(g))continue;d.push(g),u++}}return d}function Oe(e,i,t){let n=e.children;for(let r=0;r<n.length;r++)if(t.value+=1,t.value>i||Oe(n[r],i,t))return!0;return!1}function Be(e){let i={value:0};return Oe(e,v.MAX_DESCENDANTS_FOR_SCREENSHOT,i)}var D=class{selectedElement=null;selectedSiblingElements=[];visibleSelectedSiblingElements=[];isActive=!1;lastHighlightedElement=null;enableEditing=!1;shadowHost=null;shadowRoot=null;hoverHighlighter=null;hoverLabel=null;selectedHighlighter=null;selectedLabel=null;hoverSiblingHighlighters=[];selectedSiblingHighlighters=[];mutationObserver=null;stableIds=new $;nodeMap=new Map;throttledRecalculate=null;constructor(){this.setupMessageListener(),this.observeLightDarkModeSwitch(),this.notifyScriptLoaded(),this.throttledRecalculate=this.throttleRAF(this.recalculateSelectedElement.bind(this))}throttleRAF(i){let t=null,n=null;return(...r)=>{n=r,t===null&&(t=requestAnimationFrame(()=>{n!==null&&i(...n),t=null,n=null}))}}isPureTextElement(i){if(!i||!(i instanceof HTMLElement))return!1;let t=i.tagName.toLowerCase();return t==="style"||t==="script"||t==="img"||i.childElementCount>0?!1:Array.from(i.childNodes).every(r=>r.nodeType===Node.TEXT_NODE)}initializeHighlighter(){this.shadowHost=document.createElement("div"),this.shadowHost.style.all="initial",this.shadowRoot=this.shadowHost.attachShadow({mode:"open"}),document.body.appendChild(this.shadowHost);let i=document.createElement("style");i.textContent=ne,this.shadowRoot.appendChild(i);let t=document.createElement("style");t.textContent=ie,document.head.appendChild(t),this.hoverHighlighter=document.createElement("div"),this.hoverLabel=document.createElement("div"),this.hoverHighlighter.className="beacon-highlighter beacon-hover-highlighter",this.hoverLabel.className="beacon-label beacon-hover-label",this.selectedHighlighter=document.createElement("div"),this.selectedLabel=document.createElement("div"),this.selectedHighlighter.className="beacon-highlighter beacon-selected-highlighter",this.selectedLabel.className="beacon-label beacon-selected-label",this.shadowRoot.appendChild(this.selectedHighlighter),this.shadowRoot.appendChild(this.selectedLabel),this.shadowRoot.appendChild(this.hoverHighlighter),this.shadowRoot.appendChild(this.hoverLabel)}setupMessageListener(){window.addEventListener("message",this.handleMessage.bind(this))}notifyScriptLoaded(){this.postMessageToParent({type:"SELECTOR_SCRIPT_LOADED",timestamp:Date.now(),version:O})}postMessageToParent(i){window.parent&&window.parent.postMessage(i,"*")}handleMouseMove=i=>{if(this.isActive&&this.hoverHighlighter){let t=K(i);if(!t||t===this.hoverHighlighter||t===this.selectedHighlighter||t===this.shadowHost||this.selectedSiblingHighlighters.includes(t)||this.hoverSiblingHighlighters.includes(t)){this.hideHighlight(this.hoverHighlighter,this.hoverLabel),this.lastHighlightedElement=null,this.clearHoverSiblingHighlighters();return}if(t===this.selectedElement){this.hideHighlight(this.hoverHighlighter,this.hoverLabel),this.lastHighlightedElement=null,this.clearHoverSiblingHighlighters();return}this.lastHighlightedElement&&this.lastHighlightedElement!==t&&this.lastHighlightedElement!==this.selectedElement&&this.lastHighlightedElement.removeAttribute("contenteditable"),this.lastHighlightedElement=t,this.updateHighlighterPosition(t,this.hoverHighlighter,this.hoverLabel)}};handleMouseLeave=()=>{this.isActive&&(this.hoverHighlighter&&(this.hoverHighlighter.style.opacity="0"),this.hoverLabel&&(this.hoverLabel.style.opacity="0"),this.hoverSiblingHighlighters.length>0&&this.clearHoverSiblingHighlighters(),this.lastHighlightedElement&&this.lastHighlightedElement!==this.selectedElement&&this.lastHighlightedElement.removeAttribute("contenteditable"))};calculateLabelPosition(i,t){return t<28?{top:`${t}px`,left:`${i.left}px`,transform:"none",marginTop:"2px"}:{top:`${t}px`,left:`${i.left}px`,transform:"translateY(-100%)",marginTop:"-4px"}}updateHighlighterPosition(i,t,n){if(!t||!n)return;let r=M(i,v.MAX_SIBLING_HIGHLIGHTERS,!1);this.enableEditing&&r.length<=1&&i===this.selectedElement&&this.isPureTextElement(i)&&i.setAttribute("contenteditable","plaintext-only");let o=i.getBoundingClientRect(),l=window.innerHeight,s=Math.max(0,o.top),c=Math.min(l,o.bottom),h=Math.max(0,c-s);Object.assign(t.style,{opacity:h>0?"1":"0",top:`${s}px`,left:`${o.left}px`,width:`${o.width}px`,height:`${h}px`}),n.textContent=W(i);let a=this.calculateLabelPosition(o,s);Object.assign(n.style,{...a,opacity:h>0?"1":"0"}),t===this.selectedHighlighter?this.highlightSelectedSiblings(i):this.highlightHoverSiblings(i)}hideHighlight(i,t){i&&(i.style.opacity="0"),t&&(t.style.opacity="0");let n=i===this.hoverHighlighter,r=i===this.selectedHighlighter;n&&this.clearHoverSiblingHighlighters(),r&&this.clearSelectedSiblingHighlighters()}handleClick=async i=>{if(!this.isActive)return;i.preventDefault(),i.stopPropagation();let t=K(i);if((!t||t===this.hoverHighlighter||t===this.selectedHighlighter||t===this.shadowHost)&&(t=this.lastHighlightedElement),!t||t===this.selectedElement)return;this.unselectCurrentElement(),this.clearSelectedSiblingHighlighters(),this.selectedElement=t;let n=M(t),r=n.length>0;r&&this.highlightSelectedSiblings(t),t.hasAttribute("data-original-text")||t.setAttribute("data-original-text",encodeURIComponent(t.textContent??"")),!t.hasAttribute("data-original-style")&&t.hasAttribute("style")&&t.setAttribute("data-original-style",encodeURIComponent(t.getAttribute("style")??"")),!t.hasAttribute("data-original-src")&&t.hasAttribute("src")&&t.setAttribute("data-original-src",encodeURIComponent(t.getAttribute("src")??"")),!r&&this.enableEditing&&this.isPureTextElement(t)&&(this.selectedElement.setAttribute("contenteditable","plaintext-only"),this.selectedElement.focus()),this.selectedHighlighter&&this.selectedLabel&&(this.selectedHighlighter.style.outlineStyle="solid",this.selectedHighlighter.style.opacity="1",this.selectedHighlighter.style.pointerEvents="none",this.selectedLabel.style.opacity="1",this.selectedLabel.textContent=W(t)),this.hoverHighlighter&&(this.hoverHighlighter.style.opacity="0",this.hoverHighlighter.style.pointerEvents="none"),this.hoverLabel&&(this.hoverLabel.style.opacity="0"),this.clearHoverSiblingHighlighters(),this.updateHighlighterPosition(t,this.selectedHighlighter,this.selectedLabel),this.nodeMap=new Map,Q(document.body,null,this.stableIds,this.nodeMap,this.shadowHost);let o=Z(t,this.nodeMap),l;if(!Be(t))try{l=await Me(t)}catch(s){console.error("[replit-cartographer] Error capturing element screenshot:",s)}this.observeSelectedElement(),this.postMessageToParent({type:"ELEMENT_SELECTED",payload:{...o,screenshotBlob:l??void 0,siblingCount:r?n.length:0},timestamp:Date.now()})};restoreElements(){document.querySelectorAll('[data-replit-dirty="true"]').forEach(t=>{if(t.hasAttribute("data-original-text")){if(t.textContent!==decodeURIComponent(t.getAttribute("data-original-text")||"")){let n=decodeURIComponent(t.getAttribute("data-original-text")||"");t.textContent=n}t.removeAttribute("data-original-text")}if(t.hasAttribute("data-original-style")){let n=decodeURIComponent(t.getAttribute("data-original-style")||"");t.setAttribute("style",n),t.removeAttribute("data-original-style")}else t.removeAttribute("style");if(t.hasAttribute("data-original-src")&&t.getAttribute("src")!==decodeURIComponent(t.getAttribute("data-original-src")||"")){let n=decodeURIComponent(t.getAttribute("data-original-src")||"");t.setAttribute("src",n),t.removeAttribute("data-original-src")}t.removeAttribute("data-replit-dirty")})}unselectCurrentElement(){if(this.restoreElements(),this.selectedElement){if(this.selectedElement.removeAttribute("contenteditable"),this.selectedElement.hasAttribute("data-original-style")){let i=decodeURIComponent(this.selectedElement.getAttribute("data-original-style")||"");this.selectedElement.setAttribute("style",i),this.selectedElement.removeAttribute("data-original-style")}if(this.selectedElement.hasAttribute("data-original-src")&&this.selectedElement.getAttribute("src")!==decodeURIComponent(this.selectedElement.getAttribute("data-original-src")||"")){let i=decodeURIComponent(this.selectedElement.getAttribute("data-original-src")||"");this.selectedElement.setAttribute("src",i),this.selectedElement.removeAttribute("data-original-src")}this.selectedElement=null}this.clearSelectedSiblingHighlighters(),this.mutationObserver&&(this.mutationObserver.disconnect(),this.mutationObserver=null)}handleMessage=i=>{if(!xe(i.origin))return;let t=i.data;if(!(!t||typeof t!="object"))switch(t.type){case"TOGGLE_REPLIT_VISUAL_EDITOR":{this.handleVisualEditorToggle(t);break}case"CLEAR_SELECTION":{this.unselectCurrentElement(),this.hideHighlight(this.selectedHighlighter,this.selectedLabel);break}case"UPDATE_SELECTED_ELEMENT":{if(!this.selectedElement)return;let{attributes:n}=t;[this.selectedElement,...this.selectedSiblingElements].forEach(o=>{n.style!==void 0&&(o.setAttribute("style",n.style),o.setAttribute("data-replit-dirty","true")),n.textContent!==void 0&&(o.textContent=n.textContent,o.setAttribute("data-replit-dirty","true")),n.className!==void 0&&(o.className=n.className,o.setAttribute("data-replit-dirty","true")),n.src!==void 0&&(o.setAttribute("src",n.src),o.setAttribute("data-replit-dirty","true"))}),this.updateHighlighterPosition(this.selectedElement,this.selectedHighlighter,this.selectedLabel),this.selectedSiblingElements.length>0&&(this.clearHighlighters(this.selectedSiblingHighlighters),this.selectedSiblingHighlighters=[],this.selectedSiblingHighlighters=this.highlightElements(this.selectedSiblingElements));break}case"CLEAR_ELEMENT_DIRTY":{this.selectedElement&&this.selectedElement.removeAttribute("data-replit-dirty");break}case"APPLY_THEME_PREVIEW":{this.handleApplyThemePreview(t);break}case"CLEAR_THEME_PREVIEW":{this.handleClearThemePreview();break}case"SCREENSHOT_PAGE":{this.handleScreenshotPage(t.requestId);break}}};handleApplyThemePreview(i){if(i.type!=="APPLY_THEME_PREVIEW")return;let t=document.getElementById(v.THEME_PREVIEW_STYLE_ID);t||(t=document.createElement("style"),t.id=v.THEME_PREVIEW_STYLE_ID,document.head.appendChild(t)),t.textContent=i.themeContent}handleClearThemePreview(){let i=document.getElementById(v.THEME_PREVIEW_STYLE_ID);i&&i.remove()}async handleScreenshotPage(i){try{let t=await Pe();this.postMessageToParent({type:"SCREENSHOT_PAGE_RESULT",timestamp:Date.now(),requestId:i,screenshotBlob:t})}catch(t){console.error("[replit-cartographer] Error capturing page screenshot:",t),this.postMessageToParent({type:"SCREENSHOT_PAGE_RESULT",timestamp:Date.now(),requestId:i,error:t instanceof Error?t.message:"Unknown screenshot error"})}}handleVisualEditorToggle(i){if(i.type!=="TOGGLE_REPLIT_VISUAL_EDITOR")return;let t=!!i.enabled;this.enableEditing=!!i.enableEditing,t?(window.dispatchEvent(new CustomEvent("replit-init-tailwind")),this.postMessageToParent({type:"REPLIT_VISUAL_EDITOR_ENABLED",timestamp:Date.now()})):this.postMessageToParent({type:"REPLIT_VISUAL_EDITOR_DISABLED",timestamp:Date.now()}),this.isActive!==t&&(this.isActive=t,this.toggleEventListeners(t))}observeSelectedElement(){if(this.selectedElement){if(!this.isPureTextElement(this.selectedElement)){this.mutationObserver&&(this.mutationObserver.disconnect(),this.mutationObserver=null);return}this.mutationObserver&&this.mutationObserver.disconnect(),this.mutationObserver=new MutationObserver(i=>{if(i.some(n=>n.type==="characterData")&&this.selectedElement){this.selectedElement.setAttribute("data-replit-dirty","true");let n=Z(this.selectedElement,this.nodeMap);this.postMessageToParent({type:"ELEMENT_TEXT_CHANGED",payload:n,timestamp:Date.now()}),this.updateHighlighterPosition(this.selectedElement,this.selectedHighlighter,this.selectedLabel)}}),this.mutationObserver.observe(this.selectedElement,{characterData:!0,childList:!1,attributes:!1,subtree:!0})}}observeLightDarkModeSwitch(){let i=new MutationObserver(n=>{n.forEach(r=>{r.type==="attributes"&&r.attributeName==="class"&&(r.target.classList.contains("dark")?this.postMessageToParent({type:"DARK_MODE_USED",timestamp:Date.now()}):this.postMessageToParent({type:"LIGHT_MODE_USED",timestamp:Date.now()}))})}),t=document.documentElement;i.observe(t,{attributes:!0,attributeFilter:["class"],childList:!1,subtree:!1})}recalculateSelectedElement=()=>{this.isActive&&(this.selectedElement&&this.updateHighlighterPosition(this.selectedElement,this.selectedHighlighter,this.selectedLabel),this.lastHighlightedElement&&this.updateHighlighterPosition(this.lastHighlightedElement,this.hoverHighlighter,this.hoverLabel),this.selectedSiblingElements.length>0&&this.updateSiblingHighlighterPositions())};updateSiblingHighlighterPositions(){for(let i=0;i<this.selectedSiblingHighlighters.length;i++){let t=this.selectedSiblingHighlighters[i],n=this.visibleSelectedSiblingElements[i];if(!t||!n)continue;let r=n.getBoundingClientRect(),o=window.innerHeight,l=Math.max(0,r.top),s=Math.min(o,r.bottom),c=Math.max(0,s-l);Object.assign(t.style,{opacity:c>0?"1":"0",top:`${l}px`,left:`${r.left}px`,width:`${r.width}px`,height:`${c}px`})}}handleKeyDown=i=>{this.isActive&&(i.key==="Escape"||i.key==="Esc")&&this.handleVisualEditorToggle({type:"TOGGLE_REPLIT_VISUAL_EDITOR",enabled:!1,timestamp:Date.now()})};toggleEventListeners(i){i?(this.initializeHighlighter(),this.enableDisabledElements(),document.addEventListener("mousemove",this.handleMouseMove),document.addEventListener("mouseleave",this.handleMouseLeave),document.addEventListener("click",this.handleClick,!0),document.addEventListener("keydown",this.handleKeyDown),this.throttledRecalculate&&(window.addEventListener("resize",this.throttledRecalculate),window.addEventListener("scroll",this.throttledRecalculate,!0))):(this.restoreDisabledElements(),this.restoreElements(),document.removeEventListener("mousemove",this.handleMouseMove),document.removeEventListener("click",this.handleClick,!0),document.removeEventListener("mouseleave",this.handleMouseLeave),document.removeEventListener("keydown",this.handleKeyDown),this.throttledRecalculate&&(window.removeEventListener("resize",this.throttledRecalculate),window.removeEventListener("scroll",this.throttledRecalculate,!0)),this.mutationObserver&&(this.mutationObserver.disconnect(),this.mutationObserver=null),this.selectedElement&&(this.selectedElement.removeAttribute("contenteditable"),this.selectedElement.removeAttribute("data-original-text"),document.querySelectorAll('[contenteditable="plaintext-only"]').forEach(t=>{t.removeAttribute("contenteditable")})),this.clearSelectedSiblingHighlighters(),this.clearHoverSiblingHighlighters(),this.hoverHighlighter?.remove(),this.hoverLabel?.remove(),this.selectedHighlighter?.remove(),this.selectedLabel?.remove(),this.shadowHost?.remove(),this.hoverHighlighter=null,this.hoverLabel=null,this.selectedHighlighter=null,this.selectedLabel=null,this.shadowHost=null,this.shadowRoot=null,this.selectedElement=null)}clearHighlighters(i){return i.forEach(t=>{t.remove()}),[]}clearHoverSiblingHighlighters(){this.hoverSiblingHighlighters=this.clearHighlighters(this.hoverSiblingHighlighters)}clearSelectedSiblingHighlighters(){this.selectedSiblingElements.forEach(i=>{i.removeAttribute("contenteditable")}),this.selectedSiblingElements=[],this.visibleSelectedSiblingElements=[],this.selectedSiblingHighlighters=this.clearHighlighters(this.selectedSiblingHighlighters)}highlightElements(i){if(!this.shadowRoot||i.length===0)return[];let t=[];return i.forEach(n=>{let r=document.createElement("div");r.className="beacon-highlighter beacon-sibling-highlighter",this.shadowRoot?.appendChild(r),t.push(r);let o=n.getBoundingClientRect(),l=window.innerHeight,s=Math.max(0,o.top),c=Math.min(l,o.bottom),h=Math.max(0,c-s);Object.assign(r.style,{opacity:h>0?"1":"0",top:`${s}px`,left:`${o.left}px`,width:`${o.width}px`,height:`${h}px`})}),t}highlightHoverSiblings(i){this.clearHoverSiblingHighlighters();let t=M(i,v.MAX_SIBLING_HIGHLIGHTERS,!0);this.hoverSiblingHighlighters=this.highlightElements(t)}highlightSelectedSiblings(i){this.clearSelectedSiblingHighlighters();let t=M(i),n=t.filter(r=>ee(r));this.selectedSiblingElements=t,this.visibleSelectedSiblingElements=n,this.selectedSiblingHighlighters=this.highlightElements(n)}enableDisabledElements(){document.querySelectorAll("button[disabled], input[disabled]").forEach(i=>{i.removeAttribute("disabled"),i.setAttribute("data-replit-disabled","")})}restoreDisabledElements(){document.querySelectorAll("[data-replit-disabled]").forEach(i=>{i.removeAttribute("data-replit-disabled"),i.setAttribute("disabled","")})}};if(typeof window<"u")try{window.REPLIT_BEACON_VERSION||(window.REPLIT_BEACON_VERSION=O,new D)}catch(e){console.error("[replit-beacon] Failed to initialize:",e)}})();
+</script>
+  <script>(function() {
+  var initialized = false;
+
+  function loadTailwind() {
+    if (initialized) { return; }
+    initialized = true;
+
+        var script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.14";
+
+        if (window.REPLIT_APP_TAILWIND_CONFIG) {
+          script.setAttribute('data-config', JSON.stringify(window.REPLIT_APP_TAILWIND_CONFIG));
+        }
+
+        document.head.appendChild(script);
+  }
+
+  // Listen for the beacon requesting tailwind initialization.
+  window.addEventListener('replit-init-tailwind', function() {
+    if (window.REPLIT_APP_TAILWIND_CONFIG) {
+      loadTailwind();
+    } else {
+      // Config not ready yet — wait for the config-ready event, but proceed
+      // without a config after 1 second.  The config is optional (projects
+      // without a tailwind config file will never fire the ready event).
+      var configTimeout = setTimeout(function() { loadTailwind(); }, 1000);
+      window.addEventListener('replit-tailwind-config-ready', function() {
+        clearTimeout(configTimeout);
+        loadTailwind();
+      }, { once: true });
+    }
+  });
+})();</script>
+  <script type="text/javascript" src="/@replit/vite-plugin-dev-banner/banner-script.js" id="replit-dev-banner"></script>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-10{margin-bottom:2.5rem}.mb-12{margin-bottom:3rem}.mb-2{margin-bottom:0.5rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mb-6{margin-bottom:1.5rem}.mt-1{margin-top:0.25rem}.mt-1\.5{margin-top:0.375rem}.mt-16{margin-top:4rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.w-full{width:100%}.max-w-3xl{max-width:48rem}.max-w-5xl{max-width:64rem}.max-w-xl{max-width:36rem}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pb-8{padding-bottom:2rem}.pt-8{padding-top:2rem}.text-center{text-align:center}.text-right{text-align:right}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-semibold{font-weight:600}.leading-tight{line-height:1.25}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}@media (min-width: 768px){.md\:p-10{padding:2.5rem}.md\:text-5xl{font-size:3rem;line-height:1}}@media (min-width: 1024px){.lg\:col-span-5{grid-column:span 5 / span 5}.lg\:col-span-7{grid-column:span 7 / span 7}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}}</style></head>
+<body class="p-4 md:p-10">
+
+    <!-- Navigation -->
+    <nav class="flex justify-between items-center mb-12 max-w-5xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl" style="background:linear-gradient(135deg,rgba(45,212,191,0.15),rgba(139,92,246,0.15));border:1px solid rgba(45,212,191,0.2)">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2">
+                    <path d="m18 2 4 4"></path><path d="m17 7 3-3"></path>
+                    <path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"></path>
+                    <path d="m9 11 4 4"></path><path d="m5 19-3 3"></path><path d="m14 4 6 6"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold">MCQ جوكر التخدير</h1>
+                <p class="text-xs font-semibold" style="color:#2dd4bf">مولد أسئلة أكاديمية ذكي</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="credit-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                نور صبري
+            </span>
+            <button onclick="downloadCode()" style="background:linear-gradient(135deg,#2dd4bf,#10b981);color:#0f172a;font-weight:800;border:none;border-radius:50px;padding:8px 18px;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Cairo',sans-serif">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                تحميل الكود
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="text-center mb-10 max-w-3xl mx-auto">
+        <div class="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full text-xs font-bold" style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.15);color:#2dd4bf">
+            <span style="width:6px;height:6px;background:#2dd4bf;border-radius:50%;display:inline-block;animation:pulse 2s infinite"></span>
+            استخراج أكاديمي منظّم • ترجمة ثنائية اللغة
+        </div>
+        <h2 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+            أسئلة MCQ الاحترافية من<br>
+            <span class="glow-text">ملفاتك الطبية</span>
+        </h2>
+        <p class="text-gray-400 text-base max-w-xl mx-auto">ارفع ملفاتك الطبية وسيُولِّد الذكاء الاصطناعي أسئلة MCQ مترجمة بشكل أكاديمي منظّم • السؤال والخيارات بالعربي والإنجليزي</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="max-w-5xl mx-auto grid grid-cols-3 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="text-2xl font-black" style="color:#2dd4bf">ثنائي</div>
+            <div class="text-xs text-gray-400 mt-1">السؤال + الخيارات بالعربي</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-black" style="color:#a78bfa">أكاديمي</div>
+            <div class="text-xs text-gray-400 mt-1">ترتيب منظّم كالمحاضرات</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-black" style="color:#34d399">PDF</div>
+            <div class="text-xs text-gray-400 mt-1">ملف احترافي ملوّن</div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- File Upload -->
+        <div class="lg:col-span-7 glass-card p-6">
+            <h3 class="text-lg font-bold mb-5 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                مواد المصدر (PDF / Text)
+            </h3>
+            <div id="drop-zone" class="drop-zone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" multiple="" accept=".pdf,.txt" style="display:none">
+                <div id="drop-content">
+                    <div style="background:linear-gradient(135deg,rgba(45,212,191,0.12),rgba(139,92,246,0.12));width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid rgba(45,212,191,0.2)">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <p class="text-base font-bold mb-1">اضغط أو اسحب الملفات للرفع</p>
+                    <p class="text-sm text-gray-500">PDF والملفات النصية الطبية بالإنجليزية</p>
+                </div>
+            </div>
+            <div id="files-display" class="mt-4" style="display:none">
+                <div class="flex flex-wrap gap-2" id="file-tags"></div>
+                <button onclick="addMoreFiles()" class="mt-3 text-sm font-semibold" style="color:#2dd4bf;background:none;border:none;cursor:pointer">+ رفع المزيد من الملفات</button>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="lg:col-span-5 glass-card p-6 flex flex-col gap-5">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path></svg>
+                إعدادات التوليد
+            </h3>
+
+            <!-- Count -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2">عدد الأسئلة</label>
+                <div style="position:relative">
+                    <span style="position:absolute;left:14px;top:14px;color:#2dd4bf;font-size:0.8rem;font-weight:700;pointer-events:none" dir="ltr">Q</span>
+                    <input type="number" id="q-count" value="10" min="1" max="100" class="input-dark w-full p-3" style="padding-left:44px;direction:ltr;font-size:1.1rem;font-weight:700" oninput="checkCount()" onblur="fixCount()">
+                </div>
+                <p id="count-warn" class="text-xs mt-1.5 text-right font-semibold" style="color:#f59e0b;display:none">
+                    ⚠️ عدد كبير قد يستغرق وقتاً أطول
+                </p>
+            </div>
+
+            <!-- Difficulty -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-400 mb-2">مستوى الصعوبة</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="diff-btn" data-val="easy" onclick="setDiff(this)">سهل</button>
+                    <button class="diff-btn active" data-val="medium" onclick="setDiff(this)">متوسط</button>
+                    <button class="diff-btn" data-val="hard" onclick="setDiff(this)">صعب</button>
+                    <button class="diff-btn" data-val="mixed" onclick="setDiff(this)">متنوع</button>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div style="background:rgba(45,212,191,0.05);border:1px solid rgba(45,212,191,0.1);border-radius:0.75rem;padding:12px">
+                <p class="text-xs font-semibold" style="color:#2dd4bf;margin-bottom:4px">✦ ترجمة ثنائية تلقائية</p>
+                <p class="text-xs text-gray-500">السؤال + الخيارات تُترجم للعربي تلقائياً بتنسيق أكاديمي</p>
+            </div>
+
+            <!-- Generate Button -->
+            <div>
+                <button id="gen-btn" onclick="handleGenerate()" class="btn-cyan w-full py-4 rounded-xl text-lg flex items-center justify-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+                    <span id="btn-text">توليد ملف الأسئلة الآن</span>
+                </button>
+                <div id="status-area" class="mt-3" style="display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 pb-8 pt-8 max-w-5xl mx-auto" style="border-top:1px solid rgba(45,212,191,0.1)">
+        <div class="text-center">
+            <div class="inline-flex items-center gap-3 mb-4 px-6 py-3 rounded-2xl" style="background:rgba(45,212,191,0.06);border:1px solid rgba(45,212,191,0.12)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="text-sm font-bold" style="color:#2dd4bf">نور صبري</span>
+                <span class="text-gray-600 text-sm">•</span>
+                <span class="text-xs text-gray-500">برمجة وتطوير</span>
+            </div>
+            <p class="text-gray-600 text-xs mb-2">تم التطوير لـ بوت جوكر التخدير</p>
+            <a href="https://t.me/ANSSf_2026_bot" target="_blank" style="color:#2dd4bf;font-weight:700;font-size:0.9rem" dir="ltr">@ANSSf_2026_bot</a>
+        </div>
+    </footer>
+
+    <script>
+        // ========================
+        // Configuration
+        // ========================
+        const API_URL = "https://code-fixer--alipodhjdhd.replit.app/api/mcq/generate";
+
+        function downloadCode() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'MCQ_Nour_Sabri.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        let extractedText = "";
+        let selectedDiff = "medium";
+        let allFiles = [];
+
+        // ========================
+        // UI Helpers
+        // ========================
+        function setDiff(btn) {
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedDiff = btn.dataset.val;
+        }
+
+        function checkCount() {
+            const val = parseInt(document.getElementById('q-count').value);
+            document.getElementById('count-warn').style.display = val > 30 ? 'block' : 'none';
+        }
+
+        function fixCount() {
+            const input = document.getElementById('q-count');
+            const val = parseInt(input.value);
+            if (!val || val < 1) input.value = 1;
+            else if (val > 100) input.value = 100;
+            checkCount();
+        }
+
+        function setStatus(msg, isError = false) {
+            const area = document.getElementById('status-area');
+            area.style.display = 'block';
+            area.innerHTML = `<div class="${isError ? 'error-bar' : 'status-bar'}">${msg}</div>`;
+        }
+
+        function clearStatus() {
+            const area = document.getElementById('status-area');
+            area.style.display = 'none';
+            area.innerHTML = '';
+        }
+
+        function setLoading(on) {
+            const btn = document.getElementById('gen-btn');
+            const txt = document.getElementById('btn-text');
+            btn.disabled = on;
+            txt.innerHTML = on
+                ? '<span class="loader"></span> جاري المعالجة...'
+                : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg> توليد ملف الأسئلة الآن`;
+        }
+
+        // ========================
+        // File Handling
+        // ========================
+        function addMoreFiles() {
+            document.getElementById('file-input').click();
+        }
+
+        function renderFileTags() {
+            const display = document.getElementById('files-display');
+            const tags = document.getElementById('file-tags');
+            const dropContent = document.getElementById('drop-content');
+
+            if (allFiles.length === 0) {
+                display.style.display = 'none';
+                dropContent.style.display = '';
+                return;
+            }
+
+            dropContent.style.display = 'none';
+            display.style.display = 'block';
+            tags.innerHTML = allFiles.map((f, i) =>
+                `<div class="file-tag">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                    <span style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" dir="ltr">${f.name}</span>
+                    <button onclick="removeFile(${i})" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:1rem;line-height:1;padding:0">✕</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeFile(idx) {
+            allFiles.splice(idx, 1);
+            renderFileTags();
+            if (allFiles.length === 0) extractedText = "";
+        }
+
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            e.target.value = "";
+            setStatus("⏳ جاري قراءة الملفات...");
+            try {
+                for (const file of files) {
+                    let text = "";
+                    if (file.type === "application/pdf") {
+                        text = await extractPDF(file);
+                    } else {
+                        text = await file.text();
+                    }
+                    extractedText += " " + text;
+                    allFiles.push(file);
+                }
+                renderFileTags();
+                setStatus(`✅ تم قراءة ${allFiles.length} ملف بنجاح (${extractedText.length.toLocaleString()} حرف)`);
+                setTimeout(clearStatus, 3000);
+            } catch (err) {
+                setStatus("❌ فشل في قراءة الملف. تأكد من أنه PDF أو نص صحيح.", true);
+            }
+        });
+
+        async function extractPDF(file) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+            let text = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(it => it.str).join(" ") + "\n";
+            }
+            return text;
+        }
+
+        // ========================
+        // Translation Engine (client-side)
+        // ========================
+        async function translateText(text) {
+            if (!text || !text.trim()) return text;
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(text)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                // Response: [[ ["translated","original",...], ...], null, "en"]
+                const translated = data[0]?.map(chunk => chunk[0]).join('') || text;
+                return translated;
+            } catch (e) {
+                return text;
+            }
+        }
+
+        async function translateAllOptions(questions) {
+            const total = questions.reduce((s, q) => s + (q.options || []).length, 0);
+            let done = 0;
+            for (const q of questions) {
+                const rawOpts = q.options || [];
+                // Translate each option text (strip letter prefix before translating)
+                const translations = await Promise.all(rawOpts.map(async opt => {
+                    const clean = opt.replace(/^[A-Fa-f][\)\.][\s]*/,'').trim();
+                    const ar = await translateText(clean);
+                    done++;
+                    setStatus(`🌐 جاري ترجمة الخيارات... (${done}/${total})`);
+                    return ar;
+                }));
+                q.options_ar = translations;
+                // Translate answer text too
+                const answerClean = (q.answer || '').replace(/^[A-Fa-f][\)\.][\s]*/,'').trim();
+                q.answer_ar = await translateText(answerClean);
+            }
+            return questions;
+        }
+
+        // ========================
+        // Generate
+        // ========================
+        async function handleGenerate() {
+            if (!extractedText.trim()) {
+                setStatus("⚠️ يرجى رفع ملف (PDF أو نصي) أولاً.", true);
+                return;
+            }
+
+            const count = Math.min(Math.max(parseInt(document.getElementById('q-count').value) || 10, 1), 100);
+            setLoading(true);
+            setStatus(`🤖 جاري توليد ${count} سؤال بالذكاء الاصطناعي...`);
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        text: extractedText,
+                        count,
+                        difficulty: selectedDiff,
+                        translate_options: true,
+                        mode: "academic",
+                        bilingual: true,
+                        ordered: true
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `خطأ من الخادم (${res.status})`);
+                }
+
+                const data = await res.json();
+                let questions = data.questions || [];
+
+                if (!questions.length) throw new Error("لم يتم إنشاء أسئلة. يرجى المحاولة مجدداً.");
+
+                // Validate and trim to requested count
+                if (questions.length < count) {
+                    setStatus(`⚠️ تم توليد ${questions.length} سؤال من أصل ${count} المطلوبة.`);
+                } else {
+                    questions = questions.slice(0, count);
+                }
+
+                // Translate options to Arabic (API doesn't return options_ar)
+                setStatus("🌐 جاري ترجمة الخيارات للعربي...");
+                await translateAllOptions(questions);
+
+                setStatus("📄 جاري تجهيز ملف PDF الاحترافي...");
+                await generatePDF(questions);
+                setStatus(`✅ تم إنشاء ${questions.length} سؤال وتنزيل ملف PDF بنجاح!`);
+                setTimeout(clearStatus, 6000);
+            } catch (err) {
+                console.error(err);
+                setStatus(`❌ ${err.message || "حدث خطأ. يرجى المحاولة مرة أخرى."}`, true);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ========================
+        // PDF Generation — University Academic Style
+        // ========================
+        async function generatePDF(mcqs) {
+            const { jsPDF } = window.jspdf;
+            const PAGE_W_MM = 210, PAGE_H_MM = 297, MARGIN_MM = 12;
+            const CONTENT_W_MM = PAGE_W_MM - MARGIN_MM * 2;
+            const RENDER_W = 760;
+            const pxToMm = CONTENT_W_MM / RENDER_W;
+
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+
+            const offscreen = document.createElement('div');
+            offscreen.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${RENDER_W}px;background:#f8fafc;font-family:'Cairo',Arial,sans-serif;`;
+            document.body.appendChild(offscreen);
+
+            let curY = MARGIN_MM;
+            let firstPage = true;
+
+            async function renderBlock(el, extra = 3) {
+                offscreen.innerHTML = '';
+                offscreen.appendChild(el);
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null,
+                    width: RENDER_W,
+                    windowWidth: RENDER_W
+                });
+                const img = canvas.toDataURL('image/jpeg', 0.97);
+                const hMm = (canvas.height / 2) * pxToMm;
+                if (!firstPage && curY + hMm > PAGE_H_MM - MARGIN_MM) {
+                    pdf.addPage();
+                    curY = MARGIN_MM;
+                }
+                pdf.addImage(img, 'JPEG', MARGIN_MM, curY, CONTENT_W_MM, hMm);
+                curY += hMm + extra;
+                firstPage = false;
+            }
+
+            // ── Cover Header ──────────────────────────────────
+            const hdr = document.createElement('div');
+            hdr.style.cssText = `background:linear-gradient(135deg,#0f172a 0%,#134e4a 50%,#1e1b4b 100%);padding:32px 28px;border-radius:0;`;
+            hdr.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+                    <div>
+                        <div style="font-size:11px;font-weight:700;color:#2dd4bf;letter-spacing:3px;margin-bottom:8px;font-family:Arial">ACADEMIC MCQ BANK</div>
+                        <div style="font-size:30px;font-weight:900;color:#fff;font-family:Arial;line-height:1.1">JOKER ANESTHESIA</div>
+                        <div style="font-size:16px;font-weight:700;color:#2dd4bf;margin-top:4px;font-family:'Cairo',Arial">بنك الأسئلة الأكاديمي - التخدير</div>
+                    </div>
+                    <div style="text-align:left;direction:ltr">
+                        <div style="background:rgba(45,212,191,0.15);border:1px solid rgba(45,212,191,0.3);border-radius:12px;padding:12px 18px;text-align:center">
+                            <div style="font-size:32px;font-weight:900;color:#2dd4bf;font-family:Arial;line-height:1">${mcqs.length}</div>
+                            <div style="font-size:11px;color:#94a3b8;font-family:Arial">QUESTIONS</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;display:flex;justify-content:space-between;align-items:center">
+                    <div style="display:flex;gap:20px">
+                        <div style="font-size:12px;color:#64748b;font-family:Arial">📅 ${new Date().toLocaleDateString('ar-EG')}</div>
+                        <div style="font-size:12px;color:#64748b;font-family:Arial">🎯 أسئلة أكاديمية منظّمة • ثنائي اللغة</div>
+                    </div>
+                    <div style="font-size:13px;color:#2dd4bf;font-weight:700;font-family:'Cairo',Arial">نور صبري ✦</div>
+                </div>
+            `;
+            await renderBlock(hdr, 6);
+
+            // ── Questions ──────────────────────────────────────
+            const OPTION_LETTERS = ['A','B','C','D','E','F'];
+            const ARABIC_LETTERS = ['أ','ب','ج','د','هـ','و'];
+            const OPTION_COLORS  = ['#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#06b6d4'];
+            const OPTION_BG      = ['#eff6ff','#f5f3ff','#fffbeb','#f0fdf4','#fef2f2','#ecfeff'];
+
+            for (let i = 0; i < mcqs.length; i++) {
+                const q = mcqs[i];
+
+                // Support both English-only options and bilingual options
+                const rawOpts   = q.options    || [];
+                const rawOptsAr = q.options_ar || [];
+
+                // Build option rows
+                let optHtml = '';
+                for (let j = 0; j < rawOpts.length; j++) {
+                    const enText  = String(rawOpts[j]).replace(/^[A-Fa-f][\.\)]\s*/, '').trim();
+                    const arText  = rawOptsAr[j] ? String(rawOptsAr[j]).replace(/^[أ-ي][\.\)]\s*/, '').trim() : '';
+                    const letter  = OPTION_LETTERS[j] || String(j+1);
+                    const arLett  = ARABIC_LETTERS[j] || String(j+1);
+                    const color   = OPTION_COLORS[j % OPTION_COLORS.length];
+                    const bg      = OPTION_BG[j % OPTION_BG.length];
+
+                    optHtml += `
+                        <div style="display:flex;margin-bottom:6px;border-radius:8px;overflow:hidden;border:1px solid ${color}22">
+                            <div style="background:${color};color:#fff;width:34px;min-width:34px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;font-family:Arial">${letter}</div>
+                            <div style="flex:1;background:${bg};padding:8px 12px">
+                                <div style="direction:ltr;text-align:left;font-size:13px;color:#1e293b;font-family:Arial;font-weight:500;line-height:1.4">${enText}</div>
+                                ${arText ? `<div style="direction:rtl;text-align:right;font-size:12px;color:#475569;font-family:'Cairo',Arial;margin-top:3px;border-top:1px dashed ${color}44;padding-top:3px"><span style="color:${color};font-weight:700">${arLett}.</span> ${arText}</div>` : ''}
+                            </div>
+                        </div>`;
+                }
+
+                // Determine correct answer display
+                const answerRaw  = q.answer || '';
+                const answerIdx  = (() => {
+                    const m = answerRaw.match(/^([A-Fa-f])/);
+                    return m ? OPTION_LETTERS.indexOf(m[1].toUpperCase()) : -1;
+                })();
+                const answerEn   = answerIdx >= 0 && rawOpts[answerIdx]
+                    ? String(rawOpts[answerIdx]).replace(/^[A-Fa-f][\.\)]\s*/, '').trim()
+                    : answerRaw;
+                const answerAr   = answerIdx >= 0 && rawOptsAr[answerIdx]
+                    ? String(rawOptsAr[answerIdx]).replace(/^[أ-ي][\.\)]\s*/, '').trim()
+                    : (q.answer_ar || '');
+
+                const el = document.createElement('div');
+                el.style.cssText = `background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;width:100%;box-sizing:border-box;margin-bottom:2px;box-shadow:0 2px 8px rgba(0,0,0,0.06)`;
+                el.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:14px 18px;display:flex;align-items:center;gap:12px">
+                        <div style="width:36px;height:36px;background:linear-gradient(135deg,#2dd4bf,#0d9488);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#0f172a;font-family:Arial;flex-shrink:0">${i+1}</div>
+                        <div style="flex:1">
+                            <div style="font-size:11px;color:#2dd4bf;font-weight:700;font-family:Arial;margin-bottom:1px">QUESTION ${i+1}</div>
+                            <div style="font-size:9px;color:#475569;font-family:Arial">ANESTHESIA MCQ • ACADEMIC SERIES</div>
+                        </div>
+                        <div style="font-size:11px;color:#475569;font-family:Arial;background:rgba(255,255,255,0.08);padding:4px 10px;border-radius:20px">${i+1}/${mcqs.length}</div>
+                    </div>
+
+                    <div style="padding:16px 18px 10px;border-bottom:1px solid #f1f5f9">
+                        <div style="direction:ltr;text-align:left;font-size:15px;font-weight:700;color:#0f172a;font-family:Arial;line-height:1.5">${q.q_en || ''}</div>
+                    </div>
+
+                    <div style="padding:10px 18px 14px;background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                        <div style="display:flex;align-items:flex-start;gap:10px;direction:rtl">
+                            <div style="background:#2dd4bf;color:#0f172a;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:Arial;margin-top:2px;flex-shrink:0">الترجمة</div>
+                            <div style="direction:rtl;text-align:right;font-size:14px;font-weight:600;color:#334155;font-family:'Cairo',Arial;line-height:1.6">${q.q_ar || ''}</div>
+                        </div>
+                    </div>
+
+                    <div style="padding:14px 18px">${optHtml}</div>
+
+                    <div style="padding:0 18px 16px">
+                        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+                            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                                <span style="font-size:16px">✅</span>
+                                <span style="font-size:11px;font-weight:700;color:#15803d;font-family:Arial">CORRECT:</span>
+                                <span style="font-size:14px;font-weight:900;color:#0f172a;font-family:Arial">${answerRaw.match(/^[A-Fa-f]/)?.[0]?.toUpperCase() || ''}</span>
+                            </div>
+                            <div style="flex:1;min-width:180px">
+                                <div style="direction:ltr;text-align:left;font-size:13px;color:#166534;font-family:Arial;font-weight:600">${answerEn}</div>
+                                ${answerAr ? `<div style="direction:rtl;text-align:right;font-size:12px;color:#15803d;font-family:'Cairo',Arial;margin-top:2px">${answerAr}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                await renderBlock(el, 4);
+            }
+
+            // ── Footer ──────────────────────────────────────
+            const ftr = document.createElement('div');
+            ftr.style.cssText = `background:linear-gradient(135deg,#0f172a,#134e4a);padding:20px 28px;`;
+            ftr.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(45,212,191,0.2);padding-bottom:14px;margin-bottom:14px">
+                    <div>
+                        <div style="font-size:14px;font-weight:900;color:#fff;font-family:Arial">MCQ JOKER ANESTHESIA</div>
+                        <div style="font-size:11px;color:#64748b;font-family:Arial;margin-top:2px">Academic Question Bank — ${mcqs.length} Questions</div>
+                    </div>
+                    <div style="text-align:left;direction:ltr">
+                        <div style="font-size:13px;color:#2dd4bf;font-weight:700;font-family:'Cairo',Arial">نور صبري ✦</div>
+                        <div style="font-size:10px;color:#475569;font-family:Arial;margin-top:2px">برمجة وتطوير</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:11px;color:#475569;font-family:Arial">جميع الحقوق محفوظة © ${new Date().getFullYear()}</div>
+                    <div style="font-size:12px;color:#2dd4bf;font-weight:700;font-family:Arial;direction:ltr">@ANSSf_2026_bot</div>
+                </div>
+            `;
+            await renderBlock(ftr, 0);
+
+            document.body.removeChild(offscreen);
+            pdf.save(`Joker_MCQ_Academic_${new Date().toISOString().slice(0,10)}.pdf`);
+        }
+    </script>
+<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="b6b04f51-bfd7-4b38-96cb-5fa26191a6a9"></script>
+
+</body></html>
